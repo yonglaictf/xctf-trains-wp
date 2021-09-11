@@ -83,3 +83,69 @@ binwalk出来后的两个文件要对比.但不是用stegslove的对比,而是�
 
 $ compare to.png to_do.png  -compose src flag.png
 
+### 2017_Dating_in_Singapore6
+
+用出现的数字在日历pdf上画图得出字符...
+
+### simple_transfer
+
+foremost 流量包得到pdf,pdf用firefox打开得到:
+
+HITB{b3d0e380e9c39352c667307d010775ca}
+
+或者随便打开之后另存为文本都可以.
+
+### Erik-Baleog-and-Olaf
+
+在文件中得到原图地址,然后两个容差比较得到二维码.
+
+### János-the-Ripper
+
+暴力破解zip密码得到flag.
+
+密码4位数.
+
+可用ARCHPR也可以john.john用法如下:
+
+```
+nicroot@kaliwin:/mnt/f/trains/xctf/misc$ zip2john misc100.zip >> misc100pass
+ver 2.0 misc100.zip/flag.txt PKZIP Encr: cmplen=39, decmplen=25, crc=7788D444
+nicroot@kaliwin:/mnt/f/trains/xctf/misc$ john misc100pass
+Using default input encoding: UTF-8
+Loaded 1 password hash (PKZIP [32/64])
+Will run 8 OpenMP threads
+Proceeding with single, rules:Single
+Press 'q' or Ctrl-C to abort, almost any other key for status
+Warning: Only 3 candidates buffered for the current salt, minimum 8 needed for performance.
+Warning: Only 2 candidates buffered for the current salt, minimum 8 needed for performance.
+Warning: Only 4 candidates buffered for the current salt, minimum 8 needed for performance.
+Almost done: Processing the remaining buffered candidate passwords, if any.
+Proceeding with wordlist:/usr/share/john/password.lst, rules:Wordlist
+fish             (misc100.zip/flag.txt)
+1g 0:00:00:00 DONE 2/3 (2021-09-11 17:35) 16.66g/s 916283p/s 916283c/s 916283C/s 123456..faithfaith
+Use the "--show" option to display all of the cracked passwords reliably
+Session completed
+nicroot@kaliwin:/mnt/f/trains/xctf/misc$ john misc100pass -show
+misc100.zip/flag.txt:fish:flag.txt:misc100.zip::misc100.zip
+
+1 password hash cracked, 0 left
+```
+
+### hit-the-core
+
+strings后看到:cvqAeqacLtqazEigwiXobxrCrtuiTzahfFreqc{bnjrKwgk83kgd43j85ePgb_e_rwqr7fvbmHjklo3tews_hmkogooyf0vbnk0ii87Drfgh_n kiwutfb0ghk9ro987k5tfb_hjiouo087ptfcv}
+
+比赛名:alexctf
+
+间隔出现的flag.
+
+```
+>>> s="cvqAeqacLtqazEigwiXobxrCrtuiTzahfFreqc{bnjrKwgk83kgd43j85ePgb_e_rwqr7fvbmHjklo3tews_hmkogooyf0vbnk0ii87Drfgh_n kiwutfb0ghk9ro987k5tfb_hjiouo087ptfcv}"
+>>> s[3::5]
+'ALEXCTF{K33P_7H3_g00D_w0rk_up}'
+>>>
+```
+
+### easycap
+
+wireshark追踪流.
