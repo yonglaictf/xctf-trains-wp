@@ -423,4 +423,143 @@ b1,lsb,bY           .. <wbStego size=120, ext="\x00\x8E\xEE", data="\x1Ef\xDE\x9
 b1,msb,bY           .. text: "qwxf{you_say_chick_beautiful?}"
 ```
 
-### 
+### 3-11
+
+zsteg -a 发现有个zip包,解出来.
+
+```
+zsteg d0430db27b8c4d3694292d9ac5a55634.png -E b1,rgb,lsb,xy >1.zip
+```
+
+注意win自带的无法打开,用7zip才能打开.得到flag.txt,然后base64解码得到PNG文件.
+
+
+### Become_a_Rockstar
+
+```
+(3.8.6/envs/env-3.8.6-py) nicroot@kaliwin:/mnt/f/trains/xctf/misc$ rockstar-py -i Become_a_Rockstar.rock -o become.py
+(3.8.6/envs/env-3.8.6-py) nicroot@kaliwin:/mnt/f/trains/xctf/misc$ cat become.py
+Leonard_Adleman = "star"
+Problem_Makers = 76
+Problem_Makers = "NCTF{"
+def God(World):
+    a_boy = "flag"
+    the_boy = 3
+def Evil(your_mind):
+    a_girl = "no flag"
+    the_girl = 5
+...
+...
+(3.8.6/envs/env-3.8.6-py) nicroot@kaliwin:/mnt/f/trains/xctf/misc$ python3 become.py
+6
+8
+NCTF{youar
+nicerockstar
+}
+```
+
+### 小小的PDF 
+
+foremost直接得到隐藏图片.
+
+### Cephalopod
+
+查看流量包中有ceph协议,不用解密,wireshark中在最大的一个ceph流量包中能看到png文件头,导出分组字节流为png文件.
+
+wp中则使用```tcpxtract -f  434c8c0ba659476caa9635b97f95600c.pcap```直接得到文件.
+
+HITB{95700d8aefdc1648b90a92f3a8460a2c}
+
+### labour
+
+是个GPX地图数据
+
+https://www.gpsvisualizer.com/map?output_home
+
+把地图上传,每个点所在国家的首字母结合起来.
+
+### hong
+
+直接用foremost得到flag图片,二维码似乎没意义.这题binwalk拿不出图片.
+
+BCTF{cute&fat_cats_does_not_like_drinking}
+
+### misc_pic_again
+
+zsteg发现有个zip包.提取出来,解压后发现有个可执行文件,strings它得到答案.
+
+```
+2000  zsteg -a 719af25af2ca4707972c6ae57060238e.png
+ 2001  zsteg  719af25af2ca4707972c6ae57060238e.png -E b1,rgb,lsb,xy >> haha.zip
+ 2002  file 1
+ 2003  strings 1
+```
+
+```
+b8,rgb,lsb,Yx,prime .. text: "!C($8,\"1, 1)"
+b8,bgr,lsb,Yx,prime .. text: "(C!,8$,1\")1 \","
+nicroot@kaliwin:/mnt/f/trains/xctf/misc$ zsteg  719af25af2ca4707972c6ae57060238e.png -E b1,rgb,lsb,xy >> haha.zip
+nicroot@kaliwin:/mnt/f/trains/xctf/misc$ file 1
+1: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, too large section header offset 74309393851613184
+nicroot@kaliwin:/mnt/f/trains/xctf/misc$ strings 1
+/lib64/ld-linux-x86-64.so.2
+libc.so.6
+printf
+__libc_start_main
+__gmon_start__
+GLIBC_2.2.5
+UH-@
+UH-@
+[]A\A]A^A_
+hctf{scxdc3tok3yb0ard4g41n~~~}
+;*3$"
+```
+
+### low
+
+画图打开另存为png,然后用stegoslove看到二维码
+注意其它方式另存为png好像不行...bmp直接用stegoslove也不行.
+
+flag{139711e8e9ed545e}
+
+### 适合作为桌面
+
+用stegoslove看到二维码,扫码得到hex,fromhex得到pyc文件. uncompyle6得到python代码.再得到flag串.
+
+### 心仪的公司
+
+strings流量包最后.
+
+### misc1
+
+在010editor中使用XOR 0X80,即每个字节第一位取0.
+
+可能是通过观察这部分所有字节都大于128.转hex没成功.所以猜测第一位去掉,也就是减去128.
+
+DDCTF{9af3c9d377b61d269b11337f330c935f}
+
+### Miscellaneous-300
+
+发现文件名就是解压密码,但是是一层套一层的.需要写脚本解压.
+
+```python
+import zipfile
+import string
+import os
+
+num = 0
+basepath = './'
+openstring = '56197'
+
+while num < 1000:
+    floorszip =  zipfile.ZipFile("{}/{}.zip".format(basepath,openstring))
+    if len(floorszip.filelist)==1:
+        nextopenstring = floorszip.filelist[0].filename.split('.')[0]
+        floorszip.extractall(path="./",pwd=nextopenstring.encode("ascii"))
+        num = num + 1
+        openstring = nextopenstring
+        if openstring == '73168':
+            exit()
+    else:
+        print(floorszip)
+```
