@@ -146,6 +146,281 @@ strings后看到:cvqAeqacLtqazEigwiXobxrCrtuiTzahfFreqc{bnjrKwgk83kgd43j85ePgb_e
 >>>
 ```
 
+### glance-50
+
+在线工具拆分GIF然后在横排合成.<https://uutool.cn/gif2img/>和<https://merge.imageonline.co/cn/>
+
+离线情况下,可以python编程或者用命令.
+
+先把 gif 分解开，kali 的 convert 命令可以分解图片
+
+```
+convert glance.gif flag.png
+```
+
+-tile 是拼接时每行和每列的图片数，这里用 x1，就是只一行
+-geometry 是首选每个图和边框尺寸，我们边框为 0，图照原始尺寸即可
+
+```
+montage flag*.png -tile x1 -geometry +0+0 flag.png 
+```
+
+但因为bash中排序是按照字符的.所以会有部分错位.
+
+可以这样在convert的输出补0,然后也可以继续用convert合成:
+
+```bash
+convert 9266eadf353d4ada94ededaeb96d0c50.gif flag-%04d.png
+convert +append *.png flag.png
+```
+
+### Ditf
+
+宽高爆破后得到密码.
+
+PNG爆破宽高脚本:
+
+```python
+# -*- coding: cp936 -*-
+import binascii
+import struct
+import sys
+
+file = input("图片地址：")
+fr = open(file,'rb').read()
+data = bytearray(fr[0x0c:0x1d])
+crc32key = eval('0x'+str(binascii.b2a_hex(fr[0x1d:0x21]))[2:-1])
+#原来的代码: crc32key = eval(str(fr[29:33]).replace('\\x','').replace("b'",'0x').replace("'",''))
+n = 4095
+for w in range(n):
+    width = bytearray(struct.pack('>i', w))
+    for h in range(n):
+        height = bytearray(struct.pack('>i', h))
+        for x in range(4):
+            data[x+4] = width[x]
+            data[x+8] = height[x]
+        crc32result = binascii.crc32(data) & 0xffffffff
+        if crc32result == crc32key:
+            print(width,height)
+            newpic = bytearray(fr)
+            for x in range(4):
+                newpic[x+16] = width[x]
+                newpic[x+20] = height[x]
+            fw = open(file+'.png','wb')
+            fw.write(newpic)
+            fw.close
+            sys.exit()
+
+```
+
+密码解压后得到流量包.用wireshark提取所有文件后,在其中一个文件中找到base64编码过的flag.
+
+```
+$ cat * | grep -ai Zmx
+  ZmxhZ3tPel80bmRfSGlyMF9sb3YzX0ZvcjN2ZXJ9
+```
+
 ### easycap
 
 wireshark追踪流.
+
+### stage1
+
+stegslove 切到其它通道看到二维码,解码后再按照HEX解码,得到:
+
+```
+.ó
+¶&jWc............@...s
+...d.....Z..d..S(....c............C...sN...d..d..d..d..d..d..d..d..g..}..d..}..x..|..D]..}..|..t..|.....7}..q+.W|..GHd..S(	...NiA...il...ip...ih...ia...iL...ib...t....(....t....chr(....t....strt....flagt....i(....(....s....test.pyR........s
+.........
+...N(....R....(....(....(....s....test.pyt....<module>....s....
+```
+
+看着像pyc代码,用uncompyle6反编译饿到flag.
+
+```
+$ uncompyle6 download.pyc
+# uncompyle6 version 3.7.4
+# Python bytecode 2.7 (62211)
+# Decompiled from: Python 3.8.6 (default, Oct 19 2020, 10:44:56)
+# [GCC 10.2.0]
+# Embedded file name: test.py
+# Compiled at: 2016-06-22 13:48:38
+
+
+def flag():
+    str = [
+     65, 108, 112, 104, 97, 76, 97, 98]
+    flag = ''
+    for i in str:
+        flag += chr(i)
+
+    print flag
+# okay decompiling download.pyc
+```
+
+### Miscellaneous-200
+
+txt文件中是一堆RGB像素点.
+
+```
+$ head 62f4ea780ecf4e6bbef5f40d674ec073.txt
+255,255,255
+255,255,255
+255,255,255
+255,255,255
+255,255,255
+255,255,255
+255,255,255
+255,255,255
+255,255,255
+255,255,255
+```
+
+用cyberchef一把梭.
+
+```
+CyberChef_v9.32.3.html#recipe=Find_/_Replace(%7B'option':'Extended%20(%5C%5Cn,%20%5C%5Ct,%20%5C%5Cx...)','string':'%5C%5Cn'%7D,',',true,false,true,false)From_Decimal('Comma',false)Generate_Image('RGB',1,244)Flip_Image('Horizontal')&input=MTExMjIz
+```
+
+1.替换换行为逗号,2.From_Decimal,以逗号为分隔符,转换为bytes,3. 用RGB模式Generate_Image,每行244点.4.反转图像Flip_Image.
+
+244个像素点是因为发现像素点为61时图像有规律.所以以其倍数尝试.也可观察一共61366个像素点,61为其中一个质数.
+
+### Hear-with-your-Eyes
+
+Audacity打开用频谱图查看即可看到flag.
+
+用指数型频谱图更清楚.
+
+### Hidden-Message
+
+流量包中的两种端口号的变化分别是0和1.
+
+### Recover-Deleted-File
+
+使用命令:extundelete disk-image --restore-all
+
+### What-is-this
+
+容差.compare
+
+### red_green
+
+红绿代表01序列.
+
+用cyberchef转为RGB逗号序列.再用python处理为两种字符序列.再用cyberchef转换为01序列(可能需要对换),然后FROM BINARY得到图像.
+
+```python
+with open('RGB.txt', 'rt') as f:
+    data=f.read()
+x = data.split(',')
+print(len(x))
+print(len(x)/3)
+
+i = 0
+out = ''
+while i < len(x)/3:
+     if x[3*i]=='255' and x[3*i+1]=='0' and x[3*i+2]=='0':
+             out = out + 'A'
+     else:
+             out = out + 'B'
+     i = i + 1
+
+with open('somefile.txt', 'wt') as f:
+     f.write(out)
+
+```
+
+### normal_png
+
+CRC爆宽高.
+
+### 就在其中
+
+NetworkMiner挖出文件,然后解密.注意networkminer可能不支持的格式需要wireshark转换下.
+
+openssl rsautl -decrypt  -inkey test.key -in key.txt
+
+f9b3bfadac030a918780cd7a9ec7e1e7
+
+### 再见李华
+
+根据提示密码是LiHua结尾至少1000个字符也就是8以上.写脚本爆破md5,特别注意python的hashlib的md5中update是append的意思,不是更新.
+
+
+```python
+import hashlib
+import string
+
+m = hashlib.md5()
+
+m.update(b'123')
+
+md5target = '1a4fb3fb5ee123'
+# md5target = '3498110ce6b4ed'
+
+m.hexdigest().find(md5target)
+trysnum = 0
+for i in string.printable:
+    for j in string.printable:
+        for k in string.printable:
+            for l in string.printable:
+                trysnum = trysnum + 1
+                teststring = f'{i}{j}{k}{l}LiHua'
+                m = hashlib.md5()
+                m.update(teststring.encode())
+                if trysnum <5:
+                    print(m.hexdigest())
+                if m.hexdigest().find(md5target)>=0:
+                    print(teststring)
+                    exit()
+```
+
+### MISCall
+
+恢复git文件后执行恢复的脚本.但是有个坑点.win和linux的换行符不同,会导致结果不同.
+
+### flag_universe
+
+提取文件中再某个png图片中zsteg得到答案.
+
+### Get-the-key.txt
+
+要会挂载文件才行.注意,在wsl中,不能挂载在win的盘中,只能挂载在wsl的内部盘中.比如/tmp或者/mnt
+
+挂完再复制出来即可.
+
+```
+mkdir /tmp/fore
+sudo mount -o loop ./forensic100 /tmp/fore
+sudo cp -r /tmp/fore/ .
+sudo umount /tmp/fore
+$  sudo grep -r key.txt
+grep: 1: binary file matches
+```
+
+解压1得到结果.
+
+### Reverse-it
+
+需要知道常用文件头尾.
+
+JPG是以FFD8开头,FFD9结尾.
+
+题目名为反转,先从头到尾按字节反转,再每个字节内部半字节反转.可以用010editor的StringReverse加上NibblesReverse来解决.
+
+### 打野
+
+用zsteg -a即可看到答案.注意用zsteg还可以发现有wbstego隐写,用工具解压出来是乱码,是个误导项.
+
+```
+$ zsteg -a 瞅啥.bmp
+[?] 2 bytes of extra data after image end (IEND), offset = 0x269b0e
+extradata:0         .. ["\x00" repeated 2 times]
+imagedata           .. text: ["\r" repeated 18 times]
+b1,lsb,bY           .. <wbStego size=120, ext="\x00\x8E\xEE", data="\x1Ef\xDE\x9E\xF6\xAE\xFA\xCE\x86\x9E"..., even=false>
+b1,msb,bY           .. text: "qwxf{you_say_chick_beautiful?}"
+```
+
+### 
